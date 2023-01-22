@@ -16,31 +16,19 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
+
+
+ This script initializes the plugin, making it known to QGIS.
 """
 
-import os
 
-from qgis.PyQt import QtGui, QtWidgets, uic
-from qgis.PyQt.QtCore import pyqtSignal
+# noinspection PyPep8Naming
+def classFactory(iface):  # pylint: disable=invalid-name
+    """Load GeoTrace class from file GeoTrace.
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'geo_trace_dockwidget_base.ui'))
-
-
-class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
-
-    closingPlugin = pyqtSignal()
-
-    def __init__(self, parent=None):
-        """Constructor."""
-        super(GeoTraceDockWidget, self).__init__(parent)
-        # Set up the user interface from Designer.
-        # After setupUI you can access any designer object by doing
-        # self.<objectname>, and you can use autoconnect slots - see
-        # http://doc.qt.io/qt-5/designer-using-a-ui-file.html
-        # #widgets-and-dialogs-with-auto-connect
-        self.setupUi(self)
-
-    def closeEvent(self, event):
-        self.closingPlugin.emit()
-        event.accept()
+    :param iface: A QGIS interface instance.
+    :type iface: QgsInterface
+    """
+    #
+    from .geo_trace import GeoTrace
+    return GeoTrace(iface)

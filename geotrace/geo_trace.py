@@ -28,7 +28,6 @@ from .resources import *
 from .geo_trace_dockwidget import GeoTraceDockWidget
 import os.path
 
-
 class GeoTrace:
     """QGIS Plugin Implementation."""
 
