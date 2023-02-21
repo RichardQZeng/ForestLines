@@ -7,4 +7,4 @@ services:
       - ./:/storage
     tty: true
     # run a python file that calls all of the tests
-    command: python3 storage/geo_trace/test/test_init.py
+    command: python3 storage/test/test_init.py

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>341</width>
-    <height>659</height>
+    <height>722</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,15 +15,6 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="3" column="0">
-     <widget class="QComboBox" name="comboBox">
-      <item>
-       <property name="text">
-        <string>New Layer</string>
-       </property>
-      </item>
-     </widget>
-    </item>
     <item row="0" column="0">
      <widget class="QLabel" name="label_8">
       <property name="text">
@@ -36,21 +27,6 @@
       <property name="text">
        <string>Orientation Layer</string>
       </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QComboBox" name="traces">
-      <property name="toolTip">
-       <string>Estimate strike and dip of these polylines</string>
-      </property>
-      <property name="currentText">
-       <string>New Layer</string>
-      </property>
-      <item>
-       <property name="text">
-        <string>New Layer</string>
-       </property>
-      </item>
      </widget>
     </item>
     <item row="4" column="0">
@@ -77,9 +53,9 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="tt_sub">
+         <widget class="QPushButton" name="tt_undo">
           <property name="text">
-           <string>New Segment</string>
+           <string>Undo</string>
           </property>
          </widget>
         </item>
@@ -97,15 +73,13 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="tt_cost">
-          <property name="toolTip">
-           <string>This layer should be calculated using the Cost Calculator buttons</string>
+         <widget class="QgsMapLayerComboBox" name="tt_cost">
+          <property name="editable">
+           <bool>true</bool>
           </property>
-          <item>
-           <property name="text">
-            <string>Euclidean Distance</string>
-           </property>
-          </item>
+          <property name="currentText">
+           <string>Euclidean Distance</string>
+          </property>
          </widget>
         </item>
         <item>
@@ -116,15 +90,10 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="tt_points">
-          <property name="toolTip">
-           <string>Output points layer for keypoints</string>
+         <widget class="QgsMapLayerComboBox" name="tt_points">
+          <property name="allowEmptyLayer">
+           <bool>true</bool>
           </property>
-          <item>
-           <property name="text">
-            <string>New Layer</string>
-           </property>
-          </item>
          </widget>
         </item>
         <item>
@@ -174,9 +143,12 @@
         <item>
          <widget class="QLabel" name="label_2">
           <property name="text">
-           <string>Cost Calculator - cost from selected raster</string>
+           <string>Cost Calculator</string>
           </property>
          </widget>
+        </item>
+        <item>
+         <widget class="QgsMapLayerComboBox" name="tt_costinput"/>
         </item>
         <item>
          <widget class="QPushButton" name="cc_brightness">
@@ -249,16 +221,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="ot_dem">
-          <property name="toolTip">
-           <string>DEM to use for 3D orientation estimation</string>
-          </property>
-         </widget>
+         <widget class="QgsMapLayerComboBox" name="ot_dem"/>
         </item>
         <item>
          <widget class="QLabel" name="label_7">
           <property name="text">
-           <string>Scale - size of moving window</string>
+           <string>Scale - size of moving window in pixels</string>
           </property>
          </widget>
         </item>
@@ -266,6 +234,18 @@
          <widget class="QDoubleSpinBox" name="ot_scale">
           <property name="toolTip">
            <string>If scale is zero then no moving window will be applied</string>
+          </property>
+          <property name="decimals">
+           <number>0</number>
+          </property>
+          <property name="minimum">
+           <double>3.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>10000.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>100.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -280,7 +260,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="ot_impute">
           <property name="text">
            <string>Impute (missing) orientations</string>
           </property>
@@ -363,7 +343,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QPushButton" name="pushButton_2">
+         <widget class="QPushButton" name="mt_intensity">
           <property name="toolTip">
            <string>Measure P21 fracture intensity from mapped 2D trace lengths</string>
           </property>
@@ -373,7 +353,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_3">
+         <widget class="QPushButton" name="mt_thickness">
           <property name="text">
            <string>True thickness</string>
           </property>
@@ -382,7 +362,7 @@
         <item>
          <widget class="QLabel" name="label_10">
           <property name="text">
-           <string>Scale - size of moving window</string>
+           <string>Scale - size of moving window in pixels</string>
           </property>
          </widget>
         </item>
@@ -390,6 +370,15 @@
          <widget class="QDoubleSpinBox" name="ot_scale_2">
           <property name="toolTip">
            <string>If scale is zero then no moving window will be applied</string>
+          </property>
+          <property name="minimum">
+           <double>5.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>10000.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>100.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -443,9 +432,42 @@
       </widget>
      </widget>
     </item>
+    <item row="1" column="0">
+     <widget class="QgsMapLayerComboBox" name="traces">
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <property name="currentText">
+       <string/>
+      </property>
+      <property name="allowEmptyLayer">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QgsMapLayerComboBox" name="orientations">
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <property name="currentText">
+       <string/>
+      </property>
+      <property name="allowEmptyLayer">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QgsMapLayerComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsmaplayercombobox.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="resources.qrc"/>
  </resources>

@@ -5,6 +5,7 @@ Solve least cost paths for mapping traces.
 import numpy as np
 import scipy.sparse as s
 from scipy.sparse.csgraph import shortest_path
+from scipy.ndimage import sobel, prewitt, laplace
 
 def testImg(xdim : int =50, ydim : int =50, w : int =2):
     """
@@ -28,6 +29,35 @@ def testImg(xdim : int =50, ydim : int =50, w : int =2):
     cost[:, int(ydim / 2):int(ydim / 2) + w] *= 0.0
     return cost.T, *points
 
+def computeCostImage(image: np.ndarray, method: str = 'darkness'):
+    """
+
+    Compute a cost array based on the specified
+
+    Args:
+        image: The (y,x,band) image array to compute cost for.
+        method: a string defining the cost method to use.
+                Options are: 'darkness' [ default ], 'brightness', 'sobel', 'prewitt', 'laplace'
+
+    Returns: An (y,x) array of cost values. Note that these will be summed along each band of the input image!
+
+    """
+
+    if method == 'darkness':
+        return np.sum(image, axis=-1)
+    elif method == 'brightness':
+        cost = np.sum(image, axis=-1)
+    elif method == 'sobel':
+        cost = np.sum(np.abs(sobel(image, axis=0)) + np.abs(sobel(image, axis=1)), axis=-1)
+    elif method == 'prewitt':
+        cost = np.sum(np.abs(prewitt(image, axis=0)) + np.abs(prewitt(image, axis=1)), axis=-1)
+    elif method == 'laplace':
+        cost = np.sum(np.abs(laplace(image)), axis=-1)
+
+    # invert and return
+    mn, mx = np.nanpercentile(cost, (0, 100))
+    cost = (mx - mn) - (cost - mn) + mn
+    return cost
 
 def connectedAdjacency(image : np.ndarray, connect : str = '8'):
     """

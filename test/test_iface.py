@@ -1,8 +1,12 @@
 import unittest
 
-import geotrace
-from geotrace import iface
-from geotrace.iface import log
+import geo_trace
+from geo_trace.geotrace import interface
+from geo_trace.geotrace.interface import log
+
+"""
+TODO - implement meaningful tests here (how to do this?).
+"""
 
 class MyTestCase(unittest.TestCase):
     def test_something(self):

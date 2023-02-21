@@ -20,6 +20,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication, Qt
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
+from qgis.core import QgsMapLayerProxyModel
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -66,11 +67,8 @@ class GeoTrace:
         self.toolbar = self.iface.addToolBar(u'GeoTrace')
         self.toolbar.setObjectName(u'GeoTrace')
 
-        #print "** INITIALIZING GeoTrace"
-
         self.pluginIsActive = False
         self.dockwidget = None
-
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -212,8 +210,6 @@ class GeoTrace:
         if not self.pluginIsActive:
             self.pluginIsActive = True
 
-            #print "** STARTING GeoTrace"
-
             # dockwidget may not exist if:
             #    first run of plugin
             #    removed on close (see self.onClosePlugin method)
@@ -225,6 +221,5 @@ class GeoTrace:
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)
 
             # show the dockwidget
-            # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.dockwidget.show()
