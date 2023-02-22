@@ -18,6 +18,7 @@ def log( message, level=Qgis.Info ):
 
     Args:
         message: The message to write.
+        level= A Qgis.MessageLevel. Options are Qgis.Critical, Qgis.Warning, Qgis.Info.
     """
     QgsMessageLog.logMessage(str(message), 'GeoTrace2', level=level)
 

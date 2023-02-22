@@ -46,6 +46,13 @@
          <number>5</number>
         </property>
         <item>
+         <widget class="QPushButton" name="tt_start">
+          <property name="text">
+           <string>Start</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="tt_new">
           <property name="text">
            <string>New trace</string>
@@ -75,10 +82,13 @@
         <item>
          <widget class="QgsMapLayerComboBox" name="tt_cost">
           <property name="editable">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
           <property name="currentText">
-           <string>Euclidean Distance</string>
+           <string/>
+          </property>
+          <property name="allowEmptyLayer">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
