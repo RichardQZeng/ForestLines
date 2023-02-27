@@ -37,7 +37,7 @@ def computeCostImage(image: np.ndarray, method: str = 'darkness'):
     Args:
         image: The (y,x,band) image array to compute cost for.
         method: a string defining the cost method to use.
-                Options are: 'darkness' [ default ], 'brightness', 'sobel', 'prewitt', 'laplace'
+                Options are: 'darkness' [ default ], 'brightness', 'sobel', 'prewitt', 'laplace'.
 
     Returns: An (y,x) array of cost values. Note that these will be summed along each band of the input image!
 

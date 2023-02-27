@@ -129,11 +129,12 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     log("Please specify an output layer for traces", Qgis.Critical )
 
                 # create tracer and update button
-                self.tracer = TraceInput(  self.iface.mapCanvas(), cost, trace )
+                self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace )
                 self.iface.mapCanvas().setMapTool(self.tracer)
                 self.findChild(QtWidgets.QPushButton, name).setText("End")
 
             else: # end trace tool
+                self.tracer.clear()
                 del self.tracer # call destructor of tool
                 self.tracer = None  # end trace tool
                 self.findChild(QtWidgets.QPushButton, name).setText("Start")
