@@ -40,6 +40,7 @@ class GeoTrace:
             application at run time.
         :type iface: QgsInterface
         """
+
         # Save reference to the QGIS interface
         self.iface = iface
 
@@ -62,7 +63,8 @@ class GeoTrace:
         self.actions = []
         self.menu = self.tr(u'&GeoTrace2')
 
-        # TODO: We are going to let the user set this up in a future iteration
+        from .geotrace.interface import log
+        log("Loaded geotrace")
 
         self.toolbar = self.iface.addToolBar(u'GeoTrace')
         self.toolbar.setObjectName(u'GeoTrace')
@@ -208,6 +210,7 @@ class GeoTrace:
         """Run method that loads and starts the plugin"""
 
         if not self.pluginIsActive:
+
             self.pluginIsActive = True
 
             # dockwidget may not exist if:
@@ -216,6 +219,7 @@ class GeoTrace:
             if self.dockwidget == None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = GeoTraceDockWidget(self.iface)
+
 
             # connect to provide cleanup on closing of dockwidget
             self.dockwidget.closingPlugin.connect(self.onClosePlugin)

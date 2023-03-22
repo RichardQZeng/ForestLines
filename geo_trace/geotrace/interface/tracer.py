@@ -12,11 +12,12 @@ from qgis.core import Qgis, QgsCoordinateTransform, QgsProject, QgsPoint
 class TraceInput( QgsMapToolEmitPoint ):
 
     # state variables for trace tool
-    cost = None
-    output = None
-    rubberBand = None
-    rubberBandLine = None
-    history = None
+    cost = None # input cost layer (raster)
+    output = None # output layer (polyline)
+    rubberBand = None # control points
+    rubberBandLine = None # line visualisation of least-cost path
+    history = None # growing list of points added to path
+    segments = {} # dictionary to store segment routes in
 
     def __init__(self, iface, canvas, cost, output ):
         """
@@ -73,7 +74,9 @@ class TraceInput( QgsMapToolEmitPoint ):
         """
         self.rubberBand.reset(QgsWkbTypes.PointGeometry)
         self.rubberBandLine.reset(QgsWkbTypes.LineGeometry)
-        self.history = [[]]
+        if history:
+            self.history = [[]]
+            self.segments = {}
 
     def undo(self):
         """
@@ -81,34 +84,57 @@ class TraceInput( QgsMapToolEmitPoint ):
         """
         if len(self.history) > 1:
             self.history.pop()
-        self.update(all=True)
+        else:
+            self.history = [[]]
+        self.update()
 
-    def update(self, all=False):
+    def getSegment(self, p0x : int, p0y : int, p1x : int, p1y : int):
+        """
+        Compute or retrieve shortest path segment between the specified points.
+
+        Args:
+            p0x: Start x-coordinate
+            p0y: Start y-coordinate
+            p1x: End x-coordinate
+            p1y: End y-coordinate
+
+        Returns: path (np.array of indices) and associated cost (float).
+
+        """
+
+        if (p0x, p0y, p1x, p1y) in self.segments:
+            path, cost = self.segments[(p0x, p0y, p1x, p1y)]
+        elif (p1x, p1y, p0x, p0y) in self.segments:
+            path, cost = self.segments[(p1x, p1y, p0x, p0y)]
+        else:
+            path, cost = leastCostPath(self.trace_cost, (p0y, p0x), (p1y, p1x))
+            self.segments[(p0x, p0y, p1x, p1y)] = (path, cost) # store for future
+        return path, cost
+
+    def update(self):
         """
         Update the trace based on the control points.
-        Args:
-            all: If True, all segments will be recomputed. Otherwise, only the last one.
         """
+
+        # clear rubberband
+        self.clear(False)
         if len( self.history ) > 0:
             if len(self.history[-1]) > 0:
-                if all:
-                    self.clear(False)
-                else:
-                    p1x, p1y = self.history[-1][-1] # get last point in trace (most recently added)
-                    if len(self.history[-1]) > 1:
-                        p0x, p0y = self.history[-1][-2] # get second last point in trace
-                        path, cost = leastCostPath( self.trace_cost, (p0y,p0x), (p1y,p1x) )
-                        for p in path:
-                            self.rubberBandLine.addPoint( self.getWorldCoords( (p[1], p[0]) ), False )
-                        self.rubberBandLine.show()
+                p1x, p1y = self.history[-1][0] # only used in case only one control point exists
+                for i in range(1,len(self.history[-1])):
+                    # get least cost path between adjacent points
+                    p0x, p0y = self.history[-1][i-1]
+                    p1x, p1y = self.history[-1][i]
+                    path, cost = self.getSegment(p1x, p1y, p0x, p0y)
 
-                    # add last point to rubber band
-                    self.rubberBand.addPoint( self.getWorldCoords( (p1x, p1y) ), True )
-                    self.rubberBand.show()
-
-        # self.rubberBand.addPoint(p, True)  # true to update canvas
-        # self.rubberBandLine.addPoint(p, True)
-        # self.rubberBand.show()
+                    # add to rubber bands
+                    for p in path:
+                        self.rubberBandLine.addPoint(self.getWorldCoords((p[1], p[0])), False)
+                    self.rubberBand.addPoint(self.getWorldCoords((p0x, p0y)), False)
+                self.rubberBand.addPoint(self.getWorldCoords((p1x, p1y)), True) # add final point and redraw
+                self.rubberBand.addPoint(self.getWorldCoords((p1x, p1y)), True)
+                self.rubberBandLine.show()
+                self.rubberBand.show()
 
     def getCostCoords(self, point ):
         """
@@ -170,7 +196,6 @@ class TraceInput( QgsMapToolEmitPoint ):
         Called on canvas click events. Left click will add points to the currently active trace. Right click
         will finish the current trace and start a new one.
         """
-
         # get point
         p = self.toMapCoordinates(e.pos())
         if e.button() == Qt.LeftButton:
@@ -183,13 +208,27 @@ class TraceInput( QgsMapToolEmitPoint ):
 
                 # add control point to trace
                 pts = self.history[-1].copy()
-                pts.append( idx ) # todo - check if point should be inserted, prepended or appended!
+                if len(pts) > 1:
+                    for i,(p0,p1) in enumerate(zip( pts[:-1], pts[1:]) ):
+                        # should be inserted here?
+                        # see if points falls within circle containing
+                        # these two existing trace points
+                        # if yes; add it here.
+                        m = np.mean([p0, p1], axis=0)
+                        r = 0.5 * np.linalg.norm( np.array(p0) - np.array(p1) )
+                        if np.linalg.norm(np.array(idx)-m) < r:
+                            pts.insert(i + 1, idx)  # insert or add point
+                            break
+
+                # if it wasn't inserted, add to the end
+                if not idx in pts:
+                    pts.append( idx )
+
+                # add new trace to history
                 self.history.append(pts)
 
                 # add control point to points rubber band
-                # self.rubberBand.addPoint(p, True)  # true to update canvas
-                # self.rubberBandLine.show()
-                self.update(all=False)
+                self.update()
 
         # finish this trace and start a new one
         elif e.button() == Qt.RightButton:
@@ -197,40 +236,16 @@ class TraceInput( QgsMapToolEmitPoint ):
             self.clear()
 
     def keyReleaseEvent(self, e):
-        if e.key() == Qt.Key_Backspace:
+        if (e.key() == Qt.Key_Z) or (e.key() == Qt.Key_S):
             self.undo()
-            log("KeyPress! Backspace")
-        if e.key() == Qt.Key_Enter:
+        if (e.key() == Qt.Key_Enter) or (e.key() == Qt.Key_Return) or (e.key() == Qt.Key_A):
             self.addLine()
             self.clear()
-            log("KeyPress! Enter")
-        if e.key() == Qt.Key_Escape:
+        if (e.key() == Qt.Key_Escape) or (e.key() == Qt.Key_X):
             self.clear()
-            log("KeyPress! Escape")
-
-    #def canvasReleaseEvent(self, e):
-    #    """
-    #    Wait for new click events (avoids adding multiple points on click + hold).
-    #    """
-    #    self.isEmittingPoint = False
-
-        # r = self.rectangle()
-        #azimuth = self.point1.azimuth(self.point2)
-        #newx = (self.point1.x() + self.point2.x()) / 2
-        #newy = (self.point1.y() + self.point2.y()) / 2
-        # print self.point1.x(), self.point2.x(), self.point1.y(), self.point2.y()
-        # print newx, newy
-        #point = QgsPoint(newx, newy)
-        #self.addPoint(point, azimuth)
-
 
     def canvasMoveEvent(self, e):
+        # just in case we need this sometime
         pass
-        #if not self.isEmittingPoint:
-        #  return
-
-        #self.endPoint = self.toMapCoordinates(e.pos())
-        #self.showRect(self.startPoint, self.endPoint)
-
 
 

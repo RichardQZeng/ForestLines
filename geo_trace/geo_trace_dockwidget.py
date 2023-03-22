@@ -38,13 +38,13 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
 
 class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
-    # becomes non-null if trace tool is active
     tracer = None
 
     closingPlugin = pyqtSignal()
 
     def __init__(self, iface, parent=None):
-        """Constructor."""
+        """Constructor"""
+
         super(GeoTraceDockWidget, self).__init__(parent)
 
         # init UI components
@@ -94,7 +94,6 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         Returns: A Layer object, or None if the gui is not instantiated or the select widget could not be found.
 
         """
-
         return self.findChild(QgsMapLayerComboBox, name)
 
     def button_click(self, name):
@@ -104,8 +103,6 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         Args:
             name: The name of the button that was clicked
         """
-        # log(name + " was clicked!")
-
         # cost calculator
         if name in ['cc_brightness', 'cc_darkness', 'cc_sobel', 'cc_prewitt', 'cc_laplace']:
             method = name.split('_')[1]
@@ -119,30 +116,41 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # start/end trace tool
         elif name == 'tt_start':
             if self.tracer is None: # start trace tool
+
                 # get relevant layers from GUI
                 cost = self.get_layerSelectBox("tt_cost").currentLayer()
                 trace = self.get_layerSelectBox("traces").currentLayer()
 
                 # validate
                 if trace is None:
-                    # TODO - automatically create a new layer here
+                    # TODO - automatically create a new layer here?
                     log("Please specify an output layer for traces", Qgis.Critical )
+                    return
+
+                self.get_layerSelectBox('tt_cost').setEnabled(False)
+                self.get_layerSelectBox('tt_points').setEnabled(False)
 
                 # create tracer and update button
                 self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace )
                 self.iface.mapCanvas().setMapTool(self.tracer)
-                self.findChild(QtWidgets.QPushButton, name).setText("End")
+                self.findChild(QtWidgets.QPushButton, name).setText("End Tracing")
 
             else: # end trace tool
                 self.tracer.clear()
                 del self.tracer # call destructor of tool
                 self.tracer = None  # end trace tool
-                self.findChild(QtWidgets.QPushButton, name).setText("Start")
-
+                self.findChild(QtWidgets.QPushButton, name).setText("Start Tracing")
+                self.get_layerSelectBox('tt_cost').setEnabled(True)
+                self.get_layerSelectBox('tt_points').setEnabled(True)
 
         # undo trace operation
         elif name == 'tt_undo':
-            pass
+            if self.tracer is not None:
+                self.tracer.undo()
+
+        elif name == 'tt_clear':
+            if self.tracer is not None:
+                self.tracer.clear()
 
         # generate planar orientation estimates
         elif name == 'ot_estimate':

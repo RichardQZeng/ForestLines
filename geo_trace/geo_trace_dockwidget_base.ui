@@ -48,21 +48,28 @@
         <item>
          <widget class="QPushButton" name="tt_start">
           <property name="text">
-           <string>Start</string>
+           <string>Start Tracing</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="tt_new">
           <property name="text">
-           <string>New trace</string>
+           <string>New (A or right click)</string>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="tt_undo">
           <property name="text">
-           <string>Undo</string>
+           <string>Undo (Z or S)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="tt_clear">
+          <property name="text">
+           <string>Clear (X or Esc)</string>
           </property>
          </widget>
         </item>
@@ -213,6 +220,9 @@
        </layout>
       </widget>
       <widget class="QWidget" name="oriTab">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <attribute name="title">
         <string>Orient</string>
        </attribute>
@@ -348,6 +358,9 @@
        </layout>
       </widget>
       <widget class="QWidget" name="measTab">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <attribute name="title">
         <string>Measure</string>
        </attribute>
@@ -408,6 +421,9 @@
        </layout>
       </widget>
       <widget class="QWidget" name="visTab">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <attribute name="title">
         <string>Visualise</string>
        </attribute>
@@ -438,7 +454,29 @@
        <attribute name="title">
         <string>Cite</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_5"/>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QTextBrowser" name="textBrowser">
+          <property name="html">
+           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; font-size:18pt; font-weight:600; color:#24292f;&quot;&gt;About GeoTrace&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; font-size:18pt; font-weight:600; color:#24292f;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f; background-color:#ffffff;&quot;&gt;GeoTrace is a a QGIS plugin containing some helpful tools for extracting and analysing the orientations of geological structures. It can be used to rapidly digitize structural traces in raster data, estimate their 3D orientations using an associated DEM, and then visualise the results on stereonets and rose diagrams.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:16px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;&quot;&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f; background-color:#ffffff;&quot;&gt;The trace extraction method (&lt;/span&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; font-style:italic; color:#24292f;&quot;&gt;Trace&lt;/span&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f;&quot;&gt; tab) uses a least-cost path algorithm to &amp;quot;follow&amp;quot; linear features in the raster. This relies on a single-channel cost raster in which the structures of interest are represented by low values, and the background by high values. A variety of functions for quickly calculating such a cost function have been included in the &lt;/span&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; font-style:italic; color:#24292f;&quot;&gt;Cost Calculator&lt;/span&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f;&quot;&gt; tab.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:16px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;&quot;&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f;&quot;&gt;The tool also includes a series of methods for estimating 3-D orientations for geological structures based on their map-trace and 3D digital elevation data, and derived properties such as thickness. These methods are currently under active development, so have been disabled in this version.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:16px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;&quot;&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; font-size:18pt; font-weight:600; color:#24292f;&quot;&gt;Further reading and citations&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:16px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;&quot;&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f; background-color:#ffffff;&quot;&gt;If you found this tool useful, please cite&lt;/span&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f;&quot;&gt; &lt;/span&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; font-style:italic; color:#24292f;&quot;&gt;Thiele et al., 2017&lt;/span&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f;&quot;&gt;. The publication also contains a more detailed description of the methods employed by this plugin.&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:16px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; background-color:#ffffff;&quot;&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; font-style:italic; color:#24292f;&quot;&gt;Thiele, S. T., Grose, L., Samsu, A., Micklethwaite, S., Vollgger, S. A., and Cruden, A. R.: Rapid, semi-automatic fracture and contact mapping for point clouds, images and geophysical data, Solid Earth, 8, 1241-1253, &lt;/span&gt;&lt;a href=&quot;https://doi.org/10.5194/se-8-1241-2017&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0068da;&quot;&gt;https://doi.org/10.5194/se-8-1241-2017&lt;/span&gt;&lt;/a&gt;&lt;span style=&quot; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; font-style:italic; color:#24292f;&quot;&gt;, 2017&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:16px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f; background-color:#ffffff;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:16px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'-apple-system','system-ui','Segoe UI','Noto Sans','Helvetica','Arial','sans-serif','Apple Color Emoji','Segoe UI Emoji'; color:#24292f; background-color:#ffffff;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>

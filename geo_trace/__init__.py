@@ -31,4 +31,5 @@ def classFactory(iface):  # pylint: disable=invalid-name
     """
     #
     from .geo_trace import GeoTrace
+
     return GeoTrace(iface)
