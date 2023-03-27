@@ -20,7 +20,7 @@ class TraceInput( QgsMapToolEmitPoint ):
     history = None # growing list of points added to path
     segments = {} # dictionary to store segment routes in
 
-    def __init__(self, iface, canvas, cost, output, points=None, classEdit=None ):
+    def __init__(self, iface, canvas, cost, output, points=None, classEdit=None, insert=None ):
         """
         Initialise a new graphical trace input based on "Rubber bands"
 
@@ -28,7 +28,8 @@ class TraceInput( QgsMapToolEmitPoint ):
             cost: The cost raster layer to use. Can also be None to use Euclidean distance as cost.
             output: The output polyline layer to save results to.
             points: The output polyline layer to save control points to. Can be None.
-            textedit: A QLineEdit instance from which the 'class' attribute will be taken during digitisation. Can be None.
+            textedit: A QLineEdit instance from which the 'class' attribute will be taken during digitisation. Can be None (default).
+            insert: A QCheckBox instance that toggles the insertion mode when adding new points. Can be None (default).
         """
         # init callback
         QgsMapToolEmitPoint.__init__(self, canvas)
@@ -40,6 +41,8 @@ class TraceInput( QgsMapToolEmitPoint ):
         self.output = output # put output traces here
         self.points = points # put control points here
         self.classEdit = classEdit
+        self.insert = insert
+
         # extract cost array and store
         if cost is None:
             self.cost = 1  # 1 is used to denote euclidian distance
@@ -89,7 +92,6 @@ class TraceInput( QgsMapToolEmitPoint ):
         if self.points is not None:
             for p in cpt:
                 addPoint(self.points, self.getWorldCoords((p[0], p[1])), dict(tid=tid, type=str(self.classEdit.text())), self.cost.crs() )
-
 
     def clear(self, history=True):
         """
@@ -233,16 +235,19 @@ class TraceInput( QgsMapToolEmitPoint ):
                 # add control point to trace
                 pts = self.history[-1].copy()
                 if len(pts) > 1:
-                    for i,(p0,p1) in enumerate(zip( pts[:-1], pts[1:]) ):
-                        # should be inserted here?
-                        # see if points falls within circle containing
-                        # these two existing trace points
-                        # if yes; add it here.
-                        m = np.mean([p0, p1], axis=0)
-                        r = 0.5 * np.linalg.norm( np.array(p0) - np.array(p1) )
-                        if np.linalg.norm(np.array(idx)-m) < r:
-                            pts.insert(i + 1, idx)  # insert or add point
-                            break
+                    if (self.insert is not None) and (self.insert.checkState() == Qt.Unchecked):
+                        pts.append( idx )
+                    else:
+                        for i,(p0,p1) in enumerate(zip( pts[:-1], pts[1:]) ):
+                            # should be inserted here?
+                            # see if points falls within circle containing
+                            # these two existing trace points
+                            # if yes; add it here.
+                            m = np.mean([p0, p1], axis=0)
+                            r = 0.5 * np.linalg.norm( np.array(p0) - np.array(p1) )
+                            if np.linalg.norm(np.array(idx)-m) < r:
+                                pts.insert(i + 1, idx)  # insert or add point
+                                break
 
                 # if it wasn't inserted, add to the end
                 if not idx in pts:
@@ -267,6 +272,11 @@ class TraceInput( QgsMapToolEmitPoint ):
             self.clear()
         if (e.key() == Qt.Key_Escape) or (e.key() == Qt.Key_X):
             self.clear()
+        if (e.key() == Qt.Key_D):
+            if self.insert.checkState() == Qt.Unchecked:
+                self.insert.setCheckState( Qt.Checked )
+            else:
+                self.insert.setCheckState(Qt.Unchecked)
 
     def canvasMoveEvent(self, e):
         # just in case we need this sometime

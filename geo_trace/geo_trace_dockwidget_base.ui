@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>341</width>
-    <height>722</height>
+    <height>765</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="traceTab">
        <attribute name="title">
@@ -70,6 +70,35 @@
          <widget class="QPushButton" name="tt_clear">
           <property name="text">
            <string>Clear (X or Esc)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="tt_insert">
+          <property name="text">
+           <string>Insert new points in closest segment (D)</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_5">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>10</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
          </widget>
         </item>
@@ -356,6 +385,13 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
+         <widget class="QPushButton" name="mt_topology">
+          <property name="text">
+           <string>Topology</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QPushButton" name="mt_intensity">
           <property name="toolTip">
            <string>Measure P21 fracture intensity from mapped 2D trace lengths</string>
@@ -485,6 +521,9 @@ p, li { white-space: pre-wrap; }
     </item>
     <item row="3" column="0">
      <widget class="QgsMapLayerComboBox" name="orientations">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="editable">
        <bool>false</bool>
       </property>

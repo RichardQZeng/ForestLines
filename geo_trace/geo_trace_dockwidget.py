@@ -144,7 +144,8 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
                 # create tracer and update button
                 textedit = self.findChild(QtWidgets.QLineEdit, 'tt_class')
-                self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace, point, textedit )
+                insert = self.findChild(QtWidgets.QCheckBox, 'tt_insert')
+                self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace, point, textedit, insert )
                 self.iface.mapCanvas().setMapTool(self.tracer)
                 self.findChild(QtWidgets.QPushButton, name).setText("End Tracing")
 
