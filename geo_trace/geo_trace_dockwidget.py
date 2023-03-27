@@ -31,6 +31,7 @@ from qgis.gui import QgsMapLayerComboBox
 from .geotrace.core.trace import computeCostImage
 from .geotrace.interface import log, raster_to_numpy, numpy_to_raster
 from .geotrace.interface.tracer import TraceInput
+from .geotrace.interface.geometry import addTempLayer
 
 sys.path.append(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -120,18 +121,30 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 # get relevant layers from GUI
                 cost = self.get_layerSelectBox("tt_cost").currentLayer()
                 trace = self.get_layerSelectBox("traces").currentLayer()
+                point = self.get_layerSelectBox("tt_points").currentLayer()
 
-                # validate
-                if trace is None:
-                    # TODO - automatically create a new layer here?
-                    log("Please specify an output layer for traces", Qgis.Critical )
+                # check / add layers
+                if cost is None:
+                    log( "Please select a valid cost layer", Qgis.Critical  )
+                    self.iface.messageBar().pushWarning("Warning",
+                                                        "Please select a valid cost layer")
                     return
+                if trace is None:
+                    trace = addTempLayer("traces", "polyline", cost.crs().authid() )
+                    self.get_layerSelectBox("traces").setLayer(trace)
+                    log("Adding temporary output layer 'trace'", Qgis.Info )
+                if point is None:
+                    point = addTempLayer("points", "point", cost.crs().authid())
+                    self.get_layerSelectBox("tt_points").setLayer(point)
+                    log("Adding temporary output layer 'point'", Qgis.Info )
 
                 self.get_layerSelectBox('tt_cost').setEnabled(False)
                 self.get_layerSelectBox('tt_points').setEnabled(False)
+                self.get_layerSelectBox('traces').setEnabled(False)
 
                 # create tracer and update button
-                self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace )
+                textedit = self.findChild(QtWidgets.QLineEdit, 'tt_class')
+                self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace, point, textedit )
                 self.iface.mapCanvas().setMapTool(self.tracer)
                 self.findChild(QtWidgets.QPushButton, name).setText("End Tracing")
 
@@ -142,6 +155,7 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.findChild(QtWidgets.QPushButton, name).setText("Start Tracing")
                 self.get_layerSelectBox('tt_cost').setEnabled(True)
                 self.get_layerSelectBox('tt_points').setEnabled(True)
+                self.get_layerSelectBox('traces').setEnabled(True)
 
         # undo trace operation
         elif name == 'tt_undo':

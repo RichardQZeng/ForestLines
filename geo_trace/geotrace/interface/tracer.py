@@ -2,6 +2,7 @@
 Class for getting trace inputs.
 """
 from ..interface import raster_to_numpy, log
+from ..interface.geometry import addTempLayer, addPoint, addLine
 from ..core.trace import leastCostPath
 
 import numpy as np
@@ -19,13 +20,15 @@ class TraceInput( QgsMapToolEmitPoint ):
     history = None # growing list of points added to path
     segments = {} # dictionary to store segment routes in
 
-    def __init__(self, iface, canvas, cost, output ):
+    def __init__(self, iface, canvas, cost, output, points=None, classEdit=None ):
         """
         Initialise a new graphical trace input based on "Rubber bands"
 
         Args:
             cost: The cost raster layer to use. Can also be None to use Euclidean distance as cost.
             output: The output polyline layer to save results to.
+            points: The output polyline layer to save control points to. Can be None.
+            textedit: A QLineEdit instance from which the 'class' attribute will be taken during digitisation. Can be None.
         """
         # init callback
         QgsMapToolEmitPoint.__init__(self, canvas)
@@ -34,8 +37,9 @@ class TraceInput( QgsMapToolEmitPoint ):
 
         # store output layer and cost layer
         self.cost = cost
-        self.output = output
-
+        self.output = output # put output traces here
+        self.points = points # put control points here
+        self.classEdit = classEdit
         # extract cost array and store
         if cost is None:
             self.cost = 1  # 1 is used to denote euclidian distance
@@ -62,7 +66,29 @@ class TraceInput( QgsMapToolEmitPoint ):
         """
         Save the added line to the ouptut shapefile.
         """
-        pass
+        cpt = self.history[-1]
+        if len(cpt) <= 1:
+            return # invalid trace
+
+        trace = []
+        cost = 0
+        for  i in range(1, len(cpt)):
+            # get least cost path between adjacent points
+            p0x, p0y = cpt[i - 1]
+            p1x, p1y = cpt[i]
+            path, c = self.getSegment(p1x, p1y, p0x, p0y)
+            for p in path:
+                trace.append( self.getWorldCoords((p[1], p[0])) )
+            cost += c
+
+        cost = cost / len(trace) # normalise cost and add polyline feature
+        tid = addLine( self.output, trace, dict( cost = float(cost),
+                         length=int(len(trace)), type=str(self.classEdit.text()) ), self.cost.crs() )
+
+        # add control points to output layer
+        if self.points is not None:
+            for p in cpt:
+                addPoint(self.points, self.getWorldCoords((p[0], p[1])), dict(tid=tid, type=str(self.classEdit.text())), self.cost.crs() )
 
 
     def clear(self, history=True):
@@ -101,7 +127,6 @@ class TraceInput( QgsMapToolEmitPoint ):
         Returns: path (np.array of indices) and associated cost (float).
 
         """
-
         if (p0x, p0y, p1x, p1y) in self.segments:
             path, cost = self.segments[(p0x, p0y, p1x, p1y)]
         elif (p1x, p1y, p0x, p0y) in self.segments:
@@ -115,7 +140,6 @@ class TraceInput( QgsMapToolEmitPoint ):
         """
         Update the trace based on the control points.
         """
-
         # clear rubberband
         self.clear(False)
         if len( self.history ) > 0:

@@ -1,0 +1,135 @@
+"""
+Utility functions for creating and editing polyline layers in QGIS.
+"""
+from qgis.core import QgsField, QgsFeature, QgsGeometry, QgsPointXY, QgsProject
+from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform
+from PyQt5.Qt import QVariant
+from qgis.core import QgsVectorLayer
+
+def addTempLayer( name : str, geom : str ="point", crs : str = 'EPSG:4326' ):
+    """
+    Create a temporary (scratch) layer.
+    Args:
+        name: The name of the layer.
+        geom: The layer type. Can be "point", "polyline" or "polygon", or some string matching the QGIS specification.
+        crs: A string identifier for the crs, e.g. 'EPSG:4326' gives WGS84.
+
+    Returns: The QgsVectorLayer instance.
+    """
+    if "point" in geom.lower():
+        uri = "point"
+    elif "polyline" in geom.lower():
+        uri = "linestring"
+    elif "polygon" in geom.lower():
+        uri = "polygon"
+    else:
+        uri = geom # for other geometry types (though must exactly match the QGIS specification)
+
+    uri += "?%s" % crs
+
+    lyr = QgsVectorLayer(uri, name, "memory")
+    QgsProject().instance().addMapLayers([lyr])
+    return lyr
+
+def addField( fieldname : str, fieldtype : QVariant.Type, layer : QgsVectorLayer):
+    """
+    Add a field to the specified layer. If this field already exists then it will be retained.
+
+    Args:
+        fieldname: The name of the field to add.
+        fieldtype: The type of field to add.
+        layer: The layer to add the field too.
+
+    """
+    pr = layer.dataProvider()
+    fields = pr.fields()
+    for f in fields:
+        if f.name() == fieldname:
+            return
+    pr.addAttributes([QgsField(fieldname, fieldtype)])
+    layer.updateFields()
+
+def addPoint( layer : QgsVectorLayer, point : tuple, attributes : dict=dict(), crs : str=None ):
+    """
+    Add a point to the specified Points layer.
+
+    Args:
+        layer: The layer to add a line segment to
+        vertices: An tuple of (x, y) floats or QgsPointXY to add.
+        attributes: A dictionary such that attributes['name'] returns the attribute value of this line. Note that
+                    this field will be created if it does not already exist.
+        crs: The authid string of the crs of the geometry listed in vertices. Will be reprojected to the output layer
+              coordinates if needed. If None the crs is assumed to be the same as the output.
+
+    Returns: The integer 'id' value of the feature that was added.
+    """
+    return _addF( layer, [point], attributes, False, crs )
+
+def addLine( layer : QgsVectorLayer, vertices : list, attributes : dict=dict(), crs : str=None ):
+    """
+    Add a polyline segment in the specified Polyline layer.
+
+    Args:
+        layer: The layer to add a line segment to
+        vertices: An ordered list containing the vertices (tuple of x, y floats) or QgsPointXY.
+        attributes: A dictionary such that attributes['name'] returns the attribute value of this line. Note that
+                    this field will be created if it does not already exist.
+        crs: The authid string of the crs of the geometry listed in vertices. Will be reprojected to the output layer
+              coordinates if needed. If None the crs is assumed to be the same as the output.
+
+    Returns: The integer 'id' value of the feature that was added.
+    """
+    return _addF( layer, vertices, attributes, True, crs  )
+
+def _addF( layer : QgsVectorLayer, vertices : list, attributes : dict=dict(), line=True, crs : str=None):
+
+
+    # check other fields exist already (if not, create them)
+    addField('id', QVariant.Int, layer)
+    for k, v in attributes.items():
+        if isinstance(v, int):
+            addField(k, QVariant.Int, layer)
+        elif isinstance(v, float):
+            addField(k, QVariant.Double, layer)
+        else:
+            addField(k, QVariant.String, layer)
+            attributes[k] = str(v)
+
+    # get layer data provider
+    pr = layer.dataProvider()
+    fields = pr.fields()
+
+    # convert vertices to QGIS point
+    for i,p in enumerate(vertices):
+        if not isinstance(p, QgsPointXY):
+            vertices[i] = QgsPointXY(p[0], p[1])
+
+    # create geometry
+    fet = QgsFeature(fields)
+    if line: # add polyline
+        geom = QgsGeometry.fromPolylineXY(vertices)
+    else: # add individual points
+        geom = QgsGeometry.fromPointXY(vertices[0])
+
+    # reproject?
+    if crs is not None:
+        if layer.crs().authid() != crs:
+            geom.transform(QgsCoordinateTransform(QgsCoordinateReferenceSystem(crs),
+                                                  layer.crs(), QgsProject.instance()))
+
+    fet.setGeometry(geom)
+
+    # copy attributes
+    uuid = len(list(layer.getFeatures()))
+    fet['id'] = uuid
+    for k,v in attributes.items():
+        fet[k] = v
+
+    # finalise
+    layer.startEditing()
+    layer.addFeature(fet)
+    layer.commitChanges()
+    layer.updateFields()
+    # layer.dataProvider().forceReload()
+
+    return uuid

@@ -198,16 +198,6 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="cc_prewitt">
-          <property name="toolTip">
-           <string>Follow edges using Prewitt gradient filter</string>
-          </property>
-          <property name="text">
-           <string>Prewitt</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QPushButton" name="cc_laplace">
           <property name="toolTip">
            <string>Follow ridges using Laplace filter</string>
