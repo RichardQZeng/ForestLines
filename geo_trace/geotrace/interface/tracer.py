@@ -238,6 +238,7 @@ class TraceInput( QgsMapToolEmitPoint ):
                     if (self.insert is not None) and (self.insert.checkState() == Qt.Unchecked):
                         pts.append( idx )
                     else:
+                        pts = pts[::-1] # go in reverse order (inserts should prioritise later segments)
                         for i,(p0,p1) in enumerate(zip( pts[:-1], pts[1:]) ):
                             # should be inserted here?
                             # see if points falls within circle containing
@@ -248,6 +249,7 @@ class TraceInput( QgsMapToolEmitPoint ):
                             if np.linalg.norm(np.array(idx)-m) < r:
                                 pts.insert(i + 1, idx)  # insert or add point
                                 break
+                        pts = pts[::-1]
 
                 # if it wasn't inserted, add to the end
                 if not idx in pts:
