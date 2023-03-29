@@ -10,6 +10,8 @@ from PyQt5.QtCore import Qt
 from qgis.core import QgsWkbTypes
 from qgis.gui import QgsRubberBand, QgsMapToolEmitPoint
 from qgis.core import Qgis, QgsCoordinateTransform, QgsProject, QgsPoint
+
+from scipy.signal import savgol_filter
 class TraceInput( QgsMapToolEmitPoint ):
 
     # state variables for trace tool
@@ -20,7 +22,7 @@ class TraceInput( QgsMapToolEmitPoint ):
     history = None # growing list of points added to path
     segments = {} # dictionary to store segment routes in
 
-    def __init__(self, iface, canvas, cost, output, points=None, classEdit=None, insert=None ):
+    def __init__(self, iface, canvas, cost, output, points=None, classEdit=None, insert=None, smooth : int = 7 ):
         """
         Initialise a new graphical trace input based on "Rubber bands"
 
@@ -30,6 +32,7 @@ class TraceInput( QgsMapToolEmitPoint ):
             points: The output polyline layer to save control points to. Can be None.
             textedit: A QLineEdit instance from which the 'class' attribute will be taken during digitisation. Can be None (default).
             insert: A QCheckBox instance that toggles the insertion mode when adding new points. Can be None (default).
+            smooth: The amount of smoothing to apply. Default is 7.
         """
         # init callback
         QgsMapToolEmitPoint.__init__(self, canvas)
@@ -42,6 +45,7 @@ class TraceInput( QgsMapToolEmitPoint ):
         self.points = points # put control points here
         self.classEdit = classEdit
         self.insert = insert
+        self.smooth = smooth
 
         # extract cost array and store
         if cost is None:
@@ -116,7 +120,7 @@ class TraceInput( QgsMapToolEmitPoint ):
             self.history = [[]]
         self.update()
 
-    def getSegment(self, p0x : int, p0y : int, p1x : int, p1y : int):
+    def getSegment(self, p0x : int, p0y : int, p1x : int, p1y : int ):
         """
         Compute or retrieve shortest path segment between the specified points.
 
@@ -125,6 +129,7 @@ class TraceInput( QgsMapToolEmitPoint ):
             p0y: Start y-coordinate
             p1x: End x-coordinate
             p1y: End y-coordinate
+            smooth: Window size for median filter must be 0 (disable smoothing) or odd numbered.
 
         Returns: path (np.array of indices) and associated cost (float).
 
@@ -135,6 +140,17 @@ class TraceInput( QgsMapToolEmitPoint ):
             path, cost = self.segments[(p1x, p1y, p0x, p0y)]
         else:
             path, cost = leastCostPath(self.trace_cost, (p0y, p0x), (p1y, p1x))
+
+            # apply smoothing
+            k = 9 # size of smoothing kernel
+            if (self.smooth is not None) and (self.smooth.checkState() == Qt.Checked):
+                if len(path) > 2*k:
+                    start = path[0]
+                    end = path[-1]
+                    path = savgol_filter(path, k, 1, axis=0, mode='interp')
+                    path[0] = start # keep start / end points fixed
+                    path[-1] = end
+
             self.segments[(p0x, p0y, p1x, p1y)] = (path, cost) # store for future
         return path, cost
 
@@ -228,7 +244,7 @@ class TraceInput( QgsMapToolEmitPoint ):
             # get index of clicked point in cost raster
             idx = self.getCostCoords( p )
             if idx is None:
-                self.iface.messageBar().pushWarning( "Warning", "Selected point is not within raster and cannot be used" )
+                self.iface.messageBar().pushWarning( "Warning", "Selected point is not within cost raster and cannot be used" )
             else:
                 # log("Clicked pixel %s, %f" % (str(idx), self.trace_cost[idx[1], idx[0]]) )
 

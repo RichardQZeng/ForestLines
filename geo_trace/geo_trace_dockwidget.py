@@ -21,8 +21,10 @@
 import os
 import sys
 from functools import partial
+
 from qgis.PyQt import QtWidgets, uic
 from qgis.PyQt.QtCore import pyqtSignal
+from PyQt5.QtCore import Qt
 from qgis.core import QgsMapLayerProxyModel
 from qgis.core import Qgis
 
@@ -68,7 +70,7 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         layers = {
             'traces' : 'lines',
-            'orientations' : 'points',
+            'orientations' : 'vector',
             'tt_cost' : 'raster',
             'tt_points' : 'points',
             'tt_costinput' : 'raster',
@@ -82,6 +84,8 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                     c.setFilters(QgsMapLayerProxyModel.LineLayer)
                 elif layers[c.objectName()] == 'raster':
                     c.setFilters(QgsMapLayerProxyModel.RasterLayer)
+                elif layers[c.objectName()] == 'vector':
+                    c.setFilters(QgsMapLayerProxyModel.VectorLayer)
                 else:
                     log("Unknown layer type: %s" % layers[c.objectName()], Qgis.Warning)
 
@@ -126,7 +130,7 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 # check / add layers
                 if cost is None:
                     log( "Please select a valid cost layer", Qgis.Critical  )
-                    self.iface.messageBar().pushWarning("Warning",
+                    self.iface.messageBar().pushWarning("Error",
                                                         "Please select a valid cost layer")
                     return
                 if trace is None:
@@ -145,7 +149,8 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 # create tracer and update button
                 textedit = self.findChild(QtWidgets.QLineEdit, 'tt_class')
                 insert = self.findChild(QtWidgets.QCheckBox, 'tt_insert')
-                self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace, point, textedit, insert )
+                smooth = self.findChild(QtWidgets.QCheckBox, 'tt_smooth')
+                self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace, point, textedit, insert, smooth )
                 self.iface.mapCanvas().setMapTool(self.tracer)
                 self.findChild(QtWidgets.QPushButton, name).setText("End Tracing")
 
@@ -182,6 +187,29 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # calculate thickness
         elif name == 'mt_thickness':
             pass
+
+        # visualisation
+        elif name == 'vt_rose':
+            from .geotrace.interface.plotting import plot_rose # do this here in case there are install issues with matplotlib
+
+            # get layer / settings from gui
+            layer = self.get_layerSelectBox("orientations").currentLayer()
+            weighted = self.findChild(QtWidgets.QCheckBox, 'vt_weight').checkState() == Qt.Checked
+            bins = self.findChild(QtWidgets.QSpinBox, 'vt_bins').value()
+            symmetric = self.findChild(QtWidgets.QCheckBox, 'vt_sym').checkState() == Qt.Checked
+
+            if layer is None:
+                log("Please select a valid orientation layer", Qgis.Critical)
+                self.iface.messageBar().pushWarning("Error",
+                                                    "Please select a valid orientation layer")
+                return
+
+            # create plot
+            plot_rose(layer = layer, bins = bins, weighted = weighted, symmetric=symmetric )
+
+        elif name == 'vt_stereo':
+            from .geotrace.interface.plotting import plot_stereo  # do this here in case there are install issues with matplotlib
+
 
     def closeEvent(self, event):
         self.closingPlugin.emit()

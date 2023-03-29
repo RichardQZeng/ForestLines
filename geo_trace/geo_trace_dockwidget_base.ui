@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>341</width>
-    <height>765</height>
+    <height>702</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -45,6 +45,12 @@
         <property name="spacing">
          <number>5</number>
         </property>
+        <property name="topMargin">
+         <number>5</number>
+        </property>
+        <property name="bottomMargin">
+         <number>5</number>
+        </property>
         <item>
          <widget class="QPushButton" name="tt_start">
           <property name="text">
@@ -77,6 +83,16 @@
          <widget class="QCheckBox" name="tt_insert">
           <property name="text">
            <string>Insert new points in closest segment (D)</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="tt_smooth">
+          <property name="text">
+           <string>Smooth trace to reduce pixelation</string>
           </property>
           <property name="checked">
            <bool>true</bool>
@@ -448,7 +464,7 @@
       </widget>
       <widget class="QWidget" name="visTab">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <attribute name="title">
         <string>Visualise</string>
@@ -457,22 +473,182 @@
         <item>
          <widget class="QLabel" name="label_9">
           <property name="text">
-           <string>Rose diagram (2D)</string>
+           <string> Strike field - set as None to use geometry</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QGraphicsView" name="vp_rose"/>
+         <widget class="QgsFieldComboBox" name="vt_strike"/>
         </item>
         <item>
          <widget class="QLabel" name="label_11">
+          <property name="text">
+           <string> Dip field</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QgsFieldComboBox" name="vt_dip"/>
+        </item>
+        <item>
+         <widget class="Line" name="line_8">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_9">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="vt_bins">
+          <property name="suffix">
+           <string/>
+          </property>
+          <property name="prefix">
+           <string> Bin count: </string>
+          </property>
+          <property name="minimum">
+           <number>4</number>
+          </property>
+          <property name="maximum">
+           <number>360</number>
+          </property>
+          <property name="value">
+           <number>45</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="vt_weight">
+          <property name="text">
+           <string>Weight by length</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="vt_sym">
+          <property name="text">
+           <string>Symmetric</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="vt_rose">
+          <property name="text">
+           <string>Rose Diagram (2D)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="vt_grid">
+          <property name="text">
+           <string>Grid</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="vt_planes">
+          <property name="text">
+           <string>Planes</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="vt_poles">
+          <property name="text">
+           <string>Poles</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="vt_density">
+          <property name="text">
+           <string>Density</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="vt_sigma">
+          <property name="prefix">
+           <string> Sigma: </string>
+          </property>
+          <property name="minimum">
+           <double>0.100000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>90.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.500000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="vt_contours">
+          <property name="prefix">
+           <string> Contours: </string>
+          </property>
+          <property name="maximum">
+           <number>25</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="vt_stereo">
           <property name="text">
            <string>Stereonet (3D)</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QGraphicsView" name="vp_stereo"/>
+         <widget class="Line" name="line_7">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </widget>
@@ -522,7 +698,7 @@ p, li { white-space: pre-wrap; }
     <item row="3" column="0">
      <widget class="QgsMapLayerComboBox" name="orientations">
       <property name="enabled">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <property name="editable">
        <bool>false</bool>
@@ -539,6 +715,11 @@ p, li { white-space: pre-wrap; }
   </widget>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QgsFieldComboBox</class>
+   <extends>QComboBox</extends>
+   <header>qgsfieldcombobox.h</header>
+  </customwidget>
   <customwidget>
    <class>QgsMapLayerComboBox</class>
    <extends>QComboBox</extends>

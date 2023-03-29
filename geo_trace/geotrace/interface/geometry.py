@@ -1,10 +1,46 @@
 """
 Utility functions for creating and editing polyline layers in QGIS.
 """
-from qgis.core import QgsField, QgsFeature, QgsGeometry, QgsPointXY, QgsProject
+
+import math
+
+from qgis.core import QgsField, QgsFeature, QgsGeometry, QgsPointXY, QgsProject, QgsDistanceArea
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform
 from PyQt5.Qt import QVariant
 from qgis.core import QgsVectorLayer
+
+
+def getBearing(point1, point2, crs):
+    """
+    Get the distance and bearing between the
+    two points.
+
+    Args:
+        point1: The start point.
+        point2: The end point.
+        crs: The coordinate system the points use.
+
+    Returns:
+        dist: the distance between the points.
+        bearing: the bearing from point1 to point2 in degrees.
+    """
+
+    # construct a distance / area calculator
+    d = QgsDistanceArea()
+    d.setSourceCrs(crs,
+                   QgsProject.instance().transformContext())
+
+    length = d.measureLine(QgsPointXY(point1),
+                           QgsPointXY(point2))
+    bearing = math.degrees(d.bearing(
+        QgsPointXY(point1),
+        QgsPointXY(point2)))
+    while bearing < 0:
+        bearing += 360  # ensure > 0
+    while bearing > 360:
+        bearing -= 360  # ensure < 360
+
+    return length, bearing
 
 def addTempLayer( name : str, geom : str ="point", crs : str = 'EPSG:4326' ):
     """
