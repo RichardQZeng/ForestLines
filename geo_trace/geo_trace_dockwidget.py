@@ -27,7 +27,7 @@ from qgis.PyQt.QtCore import pyqtSignal
 from PyQt5.QtCore import Qt
 from qgis.core import QgsMapLayerProxyModel
 from qgis.core import Qgis
-
+from qgis.gui import QgsFieldComboBox
 from qgis.gui import QgsMapLayerComboBox
 
 from .geotrace.core.trace import computeCostImage
@@ -89,6 +89,15 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 else:
                     log("Unknown layer type: %s" % layers[c.objectName()], Qgis.Warning)
 
+        # bind field select boxes to orientation layer
+        ori = self.get_layerSelectBox('orientations')
+        bx = ['vt_strike', 'vt_dip']
+        for b in bx:
+            b = self.findChild(QgsFieldComboBox, b)
+            b.setLayer(ori.currentLayer())
+            ori.layerChanged.connect(b.setLayer)
+
+
     def get_layerSelectBox(self, name):
         """
         Return a layerSelectBox based on its name.
@@ -100,6 +109,9 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         """
         return self.findChild(QgsMapLayerComboBox, name)
+
+    def get_fieldSelectBox(self, name):
+        return self.findChild(QgsFieldComboBox, name)
 
     def button_click(self, name):
         """
@@ -194,6 +206,7 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
             # get layer / settings from gui
             layer = self.get_layerSelectBox("orientations").currentLayer()
+            strike = self.get_fieldSelectBox('vt_strike').currentField()
             weighted = self.findChild(QtWidgets.QCheckBox, 'vt_weight').checkState() == Qt.Checked
             bins = self.findChild(QtWidgets.QSpinBox, 'vt_bins').value()
             symmetric = self.findChild(QtWidgets.QCheckBox, 'vt_sym').checkState() == Qt.Checked
@@ -205,11 +218,37 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 return
 
             # create plot
-            plot_rose(layer = layer, bins = bins, weighted = weighted, symmetric=symmetric )
+            plot_rose(layer = layer, strike=strike, bins = bins, weighted = weighted, symmetric=symmetric )
 
         elif name == 'vt_stereo':
-            from .geotrace.interface.plotting import plot_stereo  # do this here in case there are install issues with matplotlib
+            # get layer to plot
+            layer = self.get_layerSelectBox("orientations").currentLayer()
+            if layer is None:
+                log("Please select a valid orientation layer", Qgis.Critical)
+                self.iface.messageBar().pushWarning("Error",
+                                                    "Please select a valid orientation layer")
+                return
 
+            # get fields to use
+            strike = self.get_fieldSelectBox('vt_strike').currentField()
+            dip = self.get_fieldSelectBox('vt_dip').currentField()
+            if (strike == '') or (dip == ''):
+                log("Please select valid strike and dip fields", Qgis.Critical)
+                self.iface.messageBar().pushWarning("Error",
+                                                    "Please select valid strike and dip fields")
+                return
+
+            # get settings
+            grid = self.findChild(QtWidgets.QCheckBox, 'vt_grid').checkState() == Qt.Checked
+            planes = self.findChild(QtWidgets.QCheckBox, 'vt_planes').checkState() == Qt.Checked
+            poles = self.findChild(QtWidgets.QCheckBox, 'vt_poles').checkState() == Qt.Checked
+            density = self.findChild(QtWidgets.QCheckBox, 'vt_density').checkState() == Qt.Checked
+            sigma = self.findChild(QtWidgets.QDoubleSpinBox, 'vt_sigma').value()
+            contours = self.findChild(QtWidgets.QSpinBox, 'vt_contours').value()
+
+            # do plot
+            from .geotrace.interface.plotting import plot_stereo
+            plot_stereo( layer, strike , dip , grid, planes, poles, density, sigma, contours )
 
     def closeEvent(self, event):
         self.closingPlugin.emit()
