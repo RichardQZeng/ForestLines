@@ -150,7 +150,12 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 textedit = self.findChild(QtWidgets.QLineEdit, 'tt_class')
                 insert = self.findChild(QtWidgets.QCheckBox, 'tt_insert')
                 smooth = self.findChild(QtWidgets.QCheckBox, 'tt_smooth')
-                self.tracer = TraceInput(  self.iface, self.iface.mapCanvas(), cost, trace, point, textedit, insert, smooth )
+                self.tracer = TraceInput(iface = self.iface, 
+                                        canvas = self.iface.mapCanvas(), 
+                                        cost = cost, 
+                                        output = trace, 
+                                        points= point, 
+                                        classEdit=textedit, insert=insert, smooth=smooth )
                 self.iface.mapCanvas().setMapTool(self.tracer)
                 self.findChild(QtWidgets.QPushButton, name).setText("End Tracing")
 

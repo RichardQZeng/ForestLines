@@ -5,10 +5,13 @@ from ..interface import raster_to_numpy, log
 from ..interface.geometry import addTempLayer, addPoint, addLine
 from ..core.trace import leastCostPath
 
+from typing import Optional
 import numpy as np
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QLineEdit, QCheckBox
+from qgis.core import QgsVectorLayer, QgsRasterLayer
 from qgis.core import QgsWkbTypes
-from qgis.gui import QgsRubberBand, QgsMapToolEmitPoint
+from qgis.gui import QgsRubberBand, QgsMapToolEmitPoint, QgisInterface, QgsMapCanvas
 from qgis.core import Qgis, QgsCoordinateTransform, QgsProject, QgsPoint
 
 from scipy.signal import savgol_filter
@@ -22,7 +25,13 @@ class TraceInput( QgsMapToolEmitPoint ):
     history = None # growing list of points added to path
     segments = {} # dictionary to store segment routes in
 
-    def __init__(self, iface, canvas, cost, output, points=None, classEdit=None, insert=None, smooth : int = 7 ):
+    def __init__(self, iface: QgisInterface, 
+                        canvas: QgsMapCanvas,  
+                        output:QgsVectorLayer, 
+                        cost:Optional[QgsRasterLayer] = None, 
+                        points:Optional[QgsVectorLayer]=None, 
+                        classEdit:Optional[QLineEdit]=None, 
+                        insert:Optional[QCheckBox]=None, smooth : int = 7 ):
         """
         Initialise a new graphical trace input based on "Rubber bands"
 
