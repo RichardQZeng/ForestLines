@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt  # do this here in case there are install issues
 from .. import mplstereonet
 from qgis.core import QgsVectorLayer, QgsWkbTypes
 from qgis.core import Qgis
+from qgis.core import NULL
 
 from ..interface import log
 from .geometry import getBearing
@@ -46,8 +47,8 @@ def plot_rose( layer : QgsVectorLayer,  strike : str = None, bins : int = 45, sy
             return
     else:
         # use strike field
-        strikes = [f[strike] for f in layer.getFeatures()] # get strike attributes
-        selected = [f in layer.selectedFeatures() for f in layer.getFeatures()]
+        strikes = [f[strike] for f in layer.getFeatures() if f[strike] != NULL]
+        selected = [f in layer.selectedFeatures() for f in layer.getFeatures() if f[strike] != NULL]
         weights = [1.] * len(strikes)
 
     strikes = np.deg2rad(np.array(strikes))
@@ -68,7 +69,7 @@ def plot_rose( layer : QgsVectorLayer,  strike : str = None, bins : int = 45, sy
     fig = plt.figure(figsize=(10, 10))
     fig.canvas.manager.set_window_title("Rose Diagram")
     ax = fig.add_subplot(111, projection='polar')
-
+    ax.set_theta_zero_location("N")
     ax.hist(strikes, bins=bins, weights=weights, alpha=0.5,
             label='all', )
     if selected.any():
@@ -102,9 +103,9 @@ def plot_stereo(layer : QgsVectorLayer, strike : str, dip : str, grid : bool =Tr
     """
 
     # get strike and dip
-    s = np.array( [f[strike] for f in layer.getFeatures()] )
-    d = np.array( [f[dip] for f in layer.getFeatures()] )
-    sel = np.array( [f in layer.selectedFeatures() for f in layer.getFeatures()] )
+    s = np.array( [f[strike] for f in layer.getFeatures() if (f[strike] != NULL and f[dip] != NULL)] )
+    d = np.array( [f[dip] for f in layer.getFeatures() if (f[strike] != NULL and f[dip] != NULL) ] )
+    sel = np.array( [f in layer.selectedFeatures() for f in layer.getFeatures() if (f[strike] != NULL and f[dip] != NULL) ] )
 
     # do plotting
     plt.close()

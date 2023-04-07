@@ -1,4 +1,5 @@
 import unittest
+import os
 
 import geo_trace
 from geo_trace.geo_trace_dockwidget import GeoTraceDockWidget
@@ -13,7 +14,9 @@ class TestTraceInput(unittest.TestCase):
         self.widget = GeoTraceDockWidget(iface)
         self.widget.show()
     def add_raster_layer(self,name):
-        rlayer = QgsRasterLayer('/storage/test/data/DEM.tif', name)
+        # rlayer = QgsRasterLayer('/storage/test/data/DEM.tif', name)
+        path = os.path.join( os.path.dirname(__file__), 'data/dem.tif')
+        rlayer = QgsRasterLayer(path, name)
         QgsProject.instance().addMapLayer(rlayer)
 
     def check_layer_exists(self, name):
