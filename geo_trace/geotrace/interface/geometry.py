@@ -3,11 +3,61 @@ Utility functions for creating and editing polyline layers in QGIS.
 """
 
 import math
+import numpy as np
 
-from qgis.core import QgsField, QgsFeature, QgsGeometry, QgsPointXY, QgsProject, QgsDistanceArea
+from qgis.core import QgsField, QgsFeature, QgsGeometry, QgsPointXY, QgsProject, QgsDistanceArea, QgsRasterLayer
 from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform
 from PyQt5.Qt import QVariant
 from qgis.core import QgsVectorLayer
+
+from ..interface import raster_to_numpy, log
+
+
+def getZ(layer: QgsVectorLayer, dem: QgsRasterLayer):
+    """
+    Extract depth information for each vertex in a polyline layer from a DEM and return lists of 3D points (as numpy
+        arrays).
+
+    Args:
+        layer: The polyline layer to intersect with the DEM.
+        dem: Elevation data containing height information.
+
+    Returns: A list of x,y,z numpy arrays for each feature in layer, in the same CRS as layer. Points that do not overlap
+             the DEM will have np.nan z-values.
+    """
+
+    # get DEM as numpy array
+    h = raster_to_numpy(dem)
+    dem_crs = dem.crs()
+
+    # get DEM extent info
+    xmin = dem.extent().xMinimum()
+    ymin = dem.extent().yMinimum()
+    dx = dem.rasterUnitsPerPixelX()
+    dy = dem.rasterUnitsPerPixelY()
+
+    # loop through features and get geometry
+    poly_crs = dem.crs()
+    output = []
+    for f in layer.getFeatures():
+        # get vertices in DEM CRS
+        geom = f.geometry()
+        geom.transform(QgsCoordinateTransform(poly_crs, dem_crs, QgsProject.instance()))
+        v = np.array([[v.x(), v.y()] for v in list(f.geometry().vertices())])
+
+        # convert to an index in the DEM array
+        i = ((v[:, 0] - xmin) / dx).astype(int)
+        j = (dem.height() - (v[:, 1] - ymin) / dy).astype(int)
+        invalid = (i < 0) | (i > dem.width()) | (j < 0) | (j > dem.height())
+        i[invalid] = 0
+        j[invalid] = 0
+
+        # get z value and store
+        z = h[i, j, 0]
+        z[invalid] = np.nan
+        output.append(np.vstack([v.T, z]).T)
+
+    return output
 
 
 def getBearing(point1, point2, crs):

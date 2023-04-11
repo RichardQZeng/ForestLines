@@ -88,6 +88,15 @@ def raster_to_numpy(layer):
         A numpy array containing the requested data.
     """
 
+    gd = gdal.Open(str(layer.source()))
+    array = gd.ReadAsArray()
+    if len(array.shape) == 2:
+        array = array[None, :, :]  # add extra dimension if needed
+
+    # put bands in last dimension
+    return np.transpose(array, (1, 2, 0))
+
+    """"
     # Getting input attributes
     band_count = layer.bandCount()
     rows = layer.height()
@@ -102,9 +111,10 @@ def raster_to_numpy(layer):
     # Loading the bands into the matrix
     for b in range(band_count):
         block = layer.dataProvider().block(b + 1, layer.extent(), cols, rows).data()
-        data = np.frombuffer(
+        data = np.frombuffer( # N.B. This causes a memory error on Windows for some reason?
             block, dtype=gdal_array.GDALTypeCodeToNumericTypeCode(pixelType)
         )
         img[:, b] = data
 
     return img.reshape((rows, cols, band_count))
+    """
