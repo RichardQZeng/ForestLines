@@ -9,13 +9,13 @@ description=A QGIS plugin for geological mapping
 
 
 version=0.1
-author=Lachlan Grose, Sam Thiele
-email=lachlan.grose@monash.edu, sam.thiele01@gmail.com
+author=Sam Thiele, Lachlan Grose
+email=sam.thiele01@gmail.com, lachlan.grose@monash.edu
 
-about=GeoTrace is a a QGIS plugin containing some helpful tools for extracting and analysing the orientations of geological structures. It is designed for optimising the following common tasks: (1) extracting linear features from raster data using a least-cost path based semi-automatic approach. (2) Estimating and imputing 3D orientations (strike and dip) from 2D traces + DEM data. (3) Extracting information from geological maps for e.g., 3D modelling.
+about=GeoTrace is a a QGIS plugin containing some helpful tools for extracting and analysing the orientations of geological structures. It is designed for optimising the following common tasks: (1) extracting linear features from raster data using a least-cost path based semi-automatic approach. (2) Estimating and imputing 3D orientations (strike and dip) from 2D traces + DEM data. (3) Extracting information from geological maps for e.g., 3D modelling. GeoTrace2 is an updated version of the original GeoTrace plugin that is currently in active development (so may be unstable!).
 
-tracker=https://github.com/samthiele/GeoTrace2/issues
-repository=https://github.com/samthiele/GeoTrace2
+tracker=https://github.com/QGeoTrace/GeoTrace2/issues
+repository=https://github.com/QGeoTrace/GeoTrace2
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,9 +25,9 @@ hasProcessingProvider=no
 # changelog=
 
 # Tags are comma separated with spaces allowed
-tags=geology, mapping,dem, orthoimage,geophysics,stereonet,python
+tags=geology, mapping, dem, orthoimage, geophysics, stereonet, python
 
-homepage=https://github.com/samthiele/GeoTrace2
+homepage=https://github.com/QGeoTrace/GeoTrace2
 category=Plugins
 icon=icon.png
 # experimental flag
