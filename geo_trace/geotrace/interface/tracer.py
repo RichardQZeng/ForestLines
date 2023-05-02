@@ -17,14 +17,6 @@ from qgis.core import Qgis, QgsCoordinateTransform, QgsProject, QgsPoint
 from scipy.signal import savgol_filter
 class TraceInput( QgsMapToolEmitPoint ):
 
-    # state variables for trace tool
-    cost = None # input cost layer (raster)
-    output = None # output layer (polyline)
-    rubberBand = None # control points
-    rubberBandLine = None # line visualisation of least-cost path
-    history = None # growing list of points added to path
-    segments = {} # dictionary to store segment routes in
-
     def __init__(self, iface: QgisInterface, 
                         canvas: QgsMapCanvas,  
                         output:QgsVectorLayer, 
@@ -43,6 +35,15 @@ class TraceInput( QgsMapToolEmitPoint ):
             insert: A QCheckBox instance that toggles the insertion mode when adding new points. Can be None (default).
             smooth: The amount of smoothing to apply. Default is 7.
         """
+
+        # init variables for trace tool
+        self.cost = None  # input cost layer (raster)
+        self.output = None  # output layer (polyline)
+        self.rubberBand = None  # control points
+        self.rubberBandLine = None  # line visualisation of least-cost path
+        self.history = None  # growing list of points added to path
+        self.segments = {}  # dictionary to store segment routes in
+
         # init callback
         QgsMapToolEmitPoint.__init__(self, canvas)
         self.iface = iface
@@ -258,8 +259,7 @@ class TraceInput( QgsMapToolEmitPoint ):
 
         # finish this trace and start a new one
         elif e.button() == Qt.RightButton:
-            self.addLine()
-            self.clear()
+            self.finishTrace()
         
     def addPoint(self, idx: tuple ):
         # get index of clicked point in cost raster
@@ -297,12 +297,19 @@ class TraceInput( QgsMapToolEmitPoint ):
 
                 # add control point to points rubber band
                 self.update()
+
+    def finishTrace(self):
+        """
+        Finalise the current trace, push it to the relevant shapefile and wait input for a new one.
+        """
+        self.addLine()
+        self.clear()
+
     def keyReleaseEvent(self, e):
         if (e.key() == Qt.Key_Z) or (e.key() == Qt.Key_S):
             self.undo()
         if (e.key() == Qt.Key_Enter) or (e.key() == Qt.Key_Return) or (e.key() == Qt.Key_A):
-            self.addLine()
-            self.clear()
+            self.finishTrace()
         if (e.key() == Qt.Key_Escape) or (e.key() == Qt.Key_X):
             self.clear()
         if (e.key() == Qt.Key_D):

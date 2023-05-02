@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>376</width>
-    <height>702</height>
+    <width>389</width>
+    <height>786</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,6 +15,19 @@
   </property>
   <widget class="QWidget" name="dockWidgetContents">
    <layout class="QGridLayout" name="gridLayout">
+    <item row="1" column="0">
+     <widget class="QgsMapLayerComboBox" name="traces">
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <property name="currentText">
+       <string/>
+      </property>
+      <property name="allowEmptyLayer">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
     <item row="0" column="0">
      <widget class="QLabel" name="label_8">
       <property name="text">
@@ -29,8 +42,27 @@
       </property>
      </widget>
     </item>
+    <item row="3" column="0">
+     <widget class="QgsMapLayerComboBox" name="orientations">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
+      <property name="editable">
+       <bool>false</bool>
+      </property>
+      <property name="currentText">
+       <string/>
+      </property>
+      <property name="allowEmptyLayer">
+       <bool>true</bool>
+      </property>
+     </widget>
+    </item>
     <item row="4" column="0">
      <widget class="QTabWidget" name="tabbar">
+      <property name="enabled">
+       <bool>true</bool>
+      </property>
       <property name="tabShape">
        <enum>QTabWidget::Rounded</enum>
       </property>
@@ -256,7 +288,7 @@
       </widget>
       <widget class="QWidget" name="oriTab">
        <property name="enabled">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
        <attribute name="title">
         <string>Orient</string>
@@ -272,6 +304,18 @@
           </property>
           <property name="text">
            <string>DEM - needed to estimate 3D orientation</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_19">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>(Elevation units should match crs.  Do not use geographic coords!)</string>
           </property>
          </widget>
         </item>
@@ -302,11 +346,14 @@
           <property name="toolTip">
            <string>If scale is zero then no moving window will be applied</string>
           </property>
+          <property name="prefix">
+           <string> scale: </string>
+          </property>
           <property name="decimals">
            <number>0</number>
           </property>
           <property name="minimum">
-           <double>3.000000000000000</double>
+           <double>0.000000000000000</double>
           </property>
           <property name="maximum">
            <double>10000.000000000000000</double>
@@ -317,75 +364,112 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_16">
-          <property name="text">
-           <string>Stride - as fraction of scale</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSlider" name="horizontalSlider_4">
-          <property name="minimum">
-           <number>5</number>
-          </property>
-          <property name="maximum">
-           <number>100</number>
-          </property>
-          <property name="singleStep">
-           <number>5</number>
-          </property>
-          <property name="value">
-           <number>50</number>
-          </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="Line" name="line_4">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="label_12">
           <property name="text">
-           <string>Planarity threshold</string>
+           <string>Goodness of fit threshold (M)</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="horizontalSlider">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+         <widget class="QLabel" name="label_16">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;(Lower thresholds allow more noisy estimates) &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="ot_mthresh">
+          <property name="prefix">
+           <string> M: </string>
+          </property>
+          <property name="maximum">
+           <double>10.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.500000000000000</double>
+          </property>
+          <property name="value">
+           <double>4.000000000000000</double>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_13">
           <property name="text">
-           <string>Linearity threshold</string>
+           <string>Linearity threshold (K)</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="horizontalSlider_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+         <widget class="QLabel" name="label_17">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>(Higher thresholds allow more dodgy co-linear estimates) </string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="ot_kthresh">
+          <property name="prefix">
+           <string> K: </string>
+          </property>
+          <property name="maximum">
+           <double>50.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>0.500000000000000</double>
+          </property>
+          <property name="value">
+           <double>1.000000000000000</double>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QLabel" name="label_14">
           <property name="text">
-           <string>Surface angle threshold</string>
+           <string>Surface angle threshold (A)</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="horizontalSlider_3">
+         <widget class="QLabel" name="label_18">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>(Minimum angle to average DEM surface orientation)</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="ot_athresh">
+          <property name="prefix">
+           <string> A: </string>
+          </property>
+          <property name="maximum">
+           <double>90.000000000000000</double>
+          </property>
+          <property name="singleStep">
+           <double>5.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>30.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="line_4">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -544,9 +628,26 @@
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Set strike/dip symbology</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="Line" name="line_9">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_20">
+          <property name="text">
+           <string>Visualise orientations on a rose diagram:</string>
           </property>
          </widget>
         </item>
@@ -600,6 +701,13 @@
          <widget class="Line" name="line_6">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_21">
+          <property name="text">
+           <string>Visualise structures on a stereonet:</string>
           </property>
          </widget>
         </item>
@@ -726,35 +834,6 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
       </widget>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QgsMapLayerComboBox" name="traces">
-      <property name="editable">
-       <bool>false</bool>
-      </property>
-      <property name="currentText">
-       <string/>
-      </property>
-      <property name="allowEmptyLayer">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QgsMapLayerComboBox" name="orientations">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="editable">
-       <bool>false</bool>
-      </property>
-      <property name="currentText">
-       <string/>
-      </property>
-      <property name="allowEmptyLayer">
-       <bool>true</bool>
-      </property>
      </widget>
     </item>
    </layout>

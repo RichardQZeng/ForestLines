@@ -10,6 +10,7 @@ from qgis.core import QgsCoordinateReferenceSystem, QgsCoordinateTransform
 from PyQt5.Qt import QVariant
 from qgis.core import QgsVectorLayer
 
+from ..core.planes import fit_plane, vec2StrikeDip
 from ..interface import raster_to_numpy, log
 
 
@@ -58,6 +59,81 @@ def getZ(layer: QgsVectorLayer, dem: QgsRasterLayer):
         output.append(np.vstack([v.T, z]).T)
 
     return output
+
+def estimateOri( traces : QgsVectorLayer, dem: QgsRasterLayer,
+                 scale: float = 0, mthresh: float = 5, kthresh: float = 0.8, athresh: float = 30 ):
+    """
+    Estimate orientations associated with traces and store them in a new points layer.
+
+    Args:
+        traces: The traces to estimate orientations for.
+        dem: The DEM used to constrain the 3D geometry. Elevation units must match the crs (don't use geographic!).
+        scale: Size of the moving window as a multiple of the DEM pixel size. Set as 0 to compute per-feature orientation.
+        mthresh: The goodness-of-fit threshold. Lower values allow noisier data to be included in estimate.
+        kthresh: The linearity threshold. Higher values allow more co-linear (==dodgy) data to be included in estimate.
+        athresh: The angle threshold. Values at less than this angle to the average DEM orientation sampled by the trace
+                 will be excluded.
+    Returns:
+        A QgsVector layer containing the estimated orientations as point features.
+    """
+
+    # get XYZ coordinates of traces
+    traces = getZ(traces, dem)
+
+    # create output layer
+    out = addTempLayer("planes_%ds_%.1fm_%.1fk_%.1fa"%(scale,mthresh,kthresh,athresh), geom='point',
+                        crs = dem.crs() )
+
+    if scale != 0:
+        window = (0.5 * dem.rasterUnitsPerPixelX() + 0.5 * dem.rasterUnitsPerPixelY()) * scale
+        # warn if pixels are not square
+        if dem.rasterUnitsPerPixelX() != dem.rasterUnitsPerPixelY():
+            log("Pixel distance in X and Y differ. Using %.1f as a window distance." % window)
+
+    # gather points to fit planes to
+    geom = []
+    for t in traces:
+        t = t[ np.isfinite(t).all(axis=-1) ] # drop nans
+        if t.shape[0] >= 3: # need at least 3 points....
+            if scale == 0:
+                geom.append(t)  # compute per-feature orientation using entire trace
+            else:
+                # use a sliding window to get multiple orientations per feature
+                s = 0
+                for e in range(t.shape[0]):
+                    d = np.linalg.norm(t[int(s), : ]- t[int(e), : ])
+                    if (d < window):
+                        continue
+                    else:
+                        # get points within window
+                        w = t[int(s):int(e), :]
+                        if len(w) >= 3:
+                            geom.append(w) # compute plane for this (later)
+                            s = e # move on to next window
+
+    # compute planes
+    for t in geom:
+        p = t[int(t.shape[0] / 2)]
+        n, M, K = fit_plane(t)  # get orientation
+        strike, dip = vec2StrikeDip(n)  # convert to a strike and dip value
+
+        # compute dip-dir for completeness
+        dipdir = strike + 90
+        if dipdir > 360:
+            dipdir -= 360
+
+        # add point
+        if (M > mthresh) and (K < kthresh):  # todo; add athresh here
+            attr = dict(x=p[0], y=p[1], z=p[2], strike=strike, dip=dip, dipdir=dipdir, nx=n[0], ny=n[1], nz=n[2], M=M,
+                        K=K)
+            for k, v in attr.items():
+                attr[k] = float(v)  # convert values to floats (from possibly weird numpy types)
+            addPoint(out, (p[0], p[1]), attributes=attr, crs=dem.crs())
+
+    if scale == 0:
+        log("Added %d orientation estimates." % len(geom))
+    else:
+        log("Added %d orientation estimates using window length %.2f." % (len(geom), window))
 
 
 def getBearing(point1, point2, crs):

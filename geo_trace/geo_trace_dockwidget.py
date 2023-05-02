@@ -33,7 +33,7 @@ from qgis.gui import QgsMapLayerComboBox
 from .geotrace.core.trace import computeCostImage
 from .geotrace.interface import log, raster_to_numpy, numpy_to_raster
 from .geotrace.interface.tracer import TraceInput
-from .geotrace.interface.geometry import addTempLayer
+from .geotrace.interface.geometry import addTempLayer, getZ, estimateOri
 
 sys.path.append(os.path.dirname(__file__))
 FORM_CLASS, _ = uic.loadUiType(os.path.join(
@@ -180,6 +180,10 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
                 self.get_layerSelectBox('tt_points').setEnabled(True)
                 self.get_layerSelectBox('traces').setEnabled(True)
 
+        # finish current trace and start a new one
+        elif name == 'tt_new':
+            self.tracer.finishTrace()
+
         # undo trace operation
         elif name == 'tt_undo':
             if self.tracer is not None:
@@ -191,7 +195,26 @@ class GeoTraceDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
         # generate planar orientation estimates
         elif name == 'ot_estimate':
-            pass
+            # get input layers and parameters
+            traces = self.get_layerSelectBox('traces').currentLayer()
+            dem = self.get_layerSelectBox('ot_dem').currentLayer()
+            if traces is None:
+                self.iface.messageBar().pushWarning("Error",
+                                                    "Please select a valid trace layer")
+                return
+            if dem is None:
+                self.iface.messageBar().pushWarning("Error",
+                                                    "Please select a valid DEM layer")
+                return
+
+            scale = self.findChild( QtWidgets.QDoubleSpinBox, 'ot_scale' ).value()
+            m = self.findChild( QtWidgets.QDoubleSpinBox, 'ot_mthresh' ).value()
+            k = self.findChild( QtWidgets.QDoubleSpinBox, 'ot_kthresh' ).value()
+            a = self.findChild( QtWidgets.QDoubleSpinBox, 'ot_athresh' ).value()
+
+            # do orientation estimate
+            estimateOri( traces, dem, scale, m, k, a )
+
 
         # impute orientations
         elif name == 'ot_impute':
