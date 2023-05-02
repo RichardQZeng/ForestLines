@@ -112,6 +112,7 @@ def estimateOri( traces : QgsVectorLayer, dem: QgsRasterLayer,
                             s = e # move on to next window
 
     # compute planes
+    npoints = 0
     for t in geom:
         p = t[int(t.shape[0] / 2)]
         n, M, K = fit_plane(t)  # get orientation
@@ -129,11 +130,11 @@ def estimateOri( traces : QgsVectorLayer, dem: QgsRasterLayer,
             for k, v in attr.items():
                 attr[k] = float(v)  # convert values to floats (from possibly weird numpy types)
             addPoint(out, (p[0], p[1]), attributes=attr, crs=dem.crs())
-
+            npoints += 1
     if scale == 0:
-        log("Added %d orientation estimates." % len(geom))
+        log("Added %d orientation estimates." % npoints)
     else:
-        log("Added %d orientation estimates using window length %.2f." % (len(geom), window))
+        log("Added %d orientation estimates using window length %.2f." % (npoints, window))
 
 
 def getBearing(point1, point2, crs):
