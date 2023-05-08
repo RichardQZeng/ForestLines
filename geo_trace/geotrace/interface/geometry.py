@@ -13,8 +13,7 @@ from qgis.core import QgsVectorLayer
 from ..core.planes import fit_plane, vec2StrikeDip
 from ..interface import raster_to_numpy, log
 
-
-def getZ(layer: QgsVectorLayer, dem: QgsRasterLayer):
+def getZ(layer: QgsVectorLayer, dem: QgsRasterLayer, patch : int = 3):
     """
     Extract depth information for each vertex in a polyline layer from a DEM and return lists of 3D points (as numpy
         arrays).
@@ -22,9 +21,12 @@ def getZ(layer: QgsVectorLayer, dem: QgsRasterLayer):
     Args:
         layer: The polyline layer to intersect with the DEM.
         dem: Elevation data containing height information.
-
-    Returns: A list of x,y,z numpy arrays for each feature in layer, in the same CRS as layer. Points that do not overlap
+        patch: the size (integer) used to estimate the orientation the DEM's normal vector at each point.
+    Returns:
+        xyz: A list of x,y,z numpy arrays for each feature in layer, in the same CRS as layer. Points that do not overlap
              the DEM will have np.nan z-values.
+
+        normal: estimated orientation of the DEM at each point.
     """
 
     # get DEM as numpy array
@@ -37,9 +39,20 @@ def getZ(layer: QgsVectorLayer, dem: QgsRasterLayer):
     dx = dem.rasterUnitsPerPixelX()
     dy = dem.rasterUnitsPerPixelY()
 
+    # compute surface normal vectors
+    ii = np.diff(h[..., 0], axis=0)
+    jj = -np.diff(h[..., 0], axis=1)
+    nx = np.sin(np.arctan(jj[1:, :] / dx))
+    ny = np.sin(np.arctan(ii[:, :-1] / dy))
+    nz = np.cos(np.arctan(jj[1:, :] / dx))
+    n = np.dstack([nx, ny, nz])
+    n /= np.linalg.norm(n, axis=-1)[:, :, None]
+    n[n[..., -1] < 0, :] *= -1 # flip so z points up
+
     # loop through features and get geometry
     poly_crs = dem.crs()
     output = []
+    normals = []
     for f in layer.getFeatures():
         # get vertices in DEM CRS
         geom = f.geometry()
@@ -49,16 +62,21 @@ def getZ(layer: QgsVectorLayer, dem: QgsRasterLayer):
         # convert to an index in the DEM array
         i = ((v[:, 0] - xmin) / dx).astype(int)
         j = (dem.height() - (v[:, 1] - ymin) / dy).astype(int)
-        invalid = (i < 0) | (i > dem.width()) | (j < 0) | (j > dem.height())
+        invalid = (i < 0) | (i > (dem.width()-2)) | (j < 0) | (j > (dem.height()-2))
         i[invalid] = 0
         j[invalid] = 0
 
         # get z value and store
-        z = h[i, j, 0]
+        z = h[j, i, 0]
         z[invalid] = np.nan
         output.append(np.vstack([v.T, z]).T)
 
-    return output
+        # get normals and store
+        _n = n[j,i,:]
+        _n[invalid] = np.nan
+        normals.append(_n)
+
+    return output, normals
 
 def estimateOri( traces : QgsVectorLayer, dem: QgsRasterLayer,
                  scale: float = 0, mthresh: float = 5, kthresh: float = 0.8, athresh: float = 30 ):
@@ -78,7 +96,7 @@ def estimateOri( traces : QgsVectorLayer, dem: QgsRasterLayer,
     """
 
     # get XYZ coordinates of traces
-    traces = getZ(traces, dem)
+    traces, normals = getZ(traces, dem)
 
     # create output layer
     out = addTempLayer("planes_%ds_%.1fm_%.1fk_%.1fa"%(scale,mthresh,kthresh,athresh), geom='point',
@@ -92,11 +110,11 @@ def estimateOri( traces : QgsVectorLayer, dem: QgsRasterLayer,
 
     # gather points to fit planes to
     geom = []
-    for t in traces:
+    for t,n in zip(traces, normals):
         t = t[ np.isfinite(t).all(axis=-1) ] # drop nans
         if t.shape[0] >= 3: # need at least 3 points....
             if scale == 0:
-                geom.append(t)  # compute per-feature orientation using entire trace
+                geom.append((t,n))  # compute per-feature orientation using entire trace
             else:
                 # use a sliding window to get multiple orientations per feature
                 s = 0
@@ -108,12 +126,12 @@ def estimateOri( traces : QgsVectorLayer, dem: QgsRasterLayer,
                         # get points within window
                         w = t[int(s):int(e), :]
                         if len(w) >= 3:
-                            geom.append(w) # compute plane for this (later)
+                            geom.append((w, n[int(s):int(e), :])) # compute plane for this (later)
                             s = e # move on to next window
 
     # compute planes
     npoints = 0
-    for t in geom:
+    for t,sn in geom:
         p = t[int(t.shape[0] / 2)]
         n, M, K = fit_plane(t)  # get orientation
         strike, dip = vec2StrikeDip(n)  # convert to a strike and dip value
@@ -123,14 +141,21 @@ def estimateOri( traces : QgsVectorLayer, dem: QgsRasterLayer,
         if dipdir > 360:
             dipdir -= 360
 
-        # add point
-        if (M > mthresh) and (K < kthresh):  # todo; add athresh here
-            attr = dict(x=p[0], y=p[1], z=p[2], strike=strike, dip=dip, dipdir=dipdir, nx=n[0], ny=n[1], nz=n[2], M=M,
-                        K=K)
-            for k, v in attr.items():
-                attr[k] = float(v)  # convert values to floats (from possibly weird numpy types)
-            addPoint(out, (p[0], p[1]), attributes=attr, crs=dem.crs())
-            npoints += 1
+        # add point?
+        if (M > mthresh) and (K < kthresh):
+
+            # compute average surface orientation and angle between this and the face
+            sn = np.nanmean(sn, axis=0)
+            sn /= np.linalg.norm(sn)
+            A = np.rad2deg( np.arccos( np.dot(sn, n ) ) ) # angle between surface and structure plane
+            if A > athresh: # check intersection angle > threshold
+                attr = dict(x=p[0], y=p[1], z=p[2], strike=strike, dip=dip, dipdir=dipdir,
+                            nx=n[0], ny=n[1], nz=n[2], snx=sn[0], sny=sn[1], snz=sn[2],
+                            A=A, M=M, K=K )
+                for k, v in attr.items():
+                    attr[k] = float(v)  # convert values to floats (from possibly weird numpy types)
+                addPoint(out, (p[0], p[1]), attributes=attr, crs=dem.crs())
+                npoints += 1
     if scale == 0:
         log("Added %d orientation estimates." % npoints)
     else:

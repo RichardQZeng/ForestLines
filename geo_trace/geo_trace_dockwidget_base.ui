@@ -633,7 +633,7 @@
            <bool>false</bool>
           </property>
           <property name="text">
-           <string>Set strike/dip symbology</string>
+           <string>Apply strike/dip symbology</string>
           </property>
          </widget>
         </item>
