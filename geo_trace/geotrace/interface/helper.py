@@ -60,8 +60,8 @@ def numpy_to_raster(array: np.ndarray, ref: QgsRasterLayer, name: str):
     driver = gdal.GetDriverByName("GTiff")
     dsOut = driver.Create(
         pathname,
-        rows + 1,
         cols + 1,
+        rows + 1,
         band_count,
         gdal.GDT_Float32,
     )
